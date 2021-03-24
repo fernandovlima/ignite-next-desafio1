@@ -9,6 +9,7 @@ import Prismic from '@prismicio/client';
 import { getPrismicClient } from '../services/prismic';
 
 import commonStyles from '../styles/common.module.scss';
+import { log } from 'node:console';
 
 interface Post {
   uid?: string;
@@ -33,15 +34,22 @@ export default function Home({ postsPagination }: HomeProps) {
   const { results, next_page } = postsPagination;
   const [posts, setPosts] = useState<Post[]>(results);
   const [hasNextPage, setHasNextPage] = useState<boolean>(!!next_page);
+  const [fetchMoreUrl, setFetchMoreUrl] = useState<string>(next_page);
 
   const fetchMorePosts = async () => {
-    const res = await fetch(next_page).then(result => result.json());
+    if (fetchMoreUrl) {
+      const res = await fetch(fetchMoreUrl).then(result => result.json());
 
-    const newPosts = [...posts, ...res.results];
-    setPosts(newPosts);
+      const newPosts = [...posts, ...res.results];
+      setPosts(newPosts);
 
-    if (!res.next_page) {
-      setHasNextPage(false);
+      if (res.next_page) {
+        setFetchMoreUrl(res.next_page);
+      }
+
+      if (!res.next_page) {
+        setHasNextPage(false);
+      }
     }
   };
 
