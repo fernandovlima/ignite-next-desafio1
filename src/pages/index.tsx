@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { GetStaticProps } from 'next';
 import Head from 'next/head';
 import { FiCalendar, FiUser } from 'react-icons/fi';
@@ -30,7 +31,19 @@ interface HomeProps {
 
 export default function Home({ postsPagination }: HomeProps) {
   const { results, next_page } = postsPagination;
-  const hasNextPage = !!next_page;
+  const [posts, setPosts] = useState<Post[]>(results);
+  const [hasNextPage, setHasNextPage] = useState<boolean>(!!next_page);
+
+  const fetchMorePosts = async () => {
+    const res = await fetch(next_page).then(result => result.json());
+
+    const newPosts = [...posts, ...res.results];
+    setPosts(newPosts);
+
+    if (!res.next_page) {
+      setHasNextPage(false);
+    }
+  };
 
   return (
     <>
@@ -39,7 +52,7 @@ export default function Home({ postsPagination }: HomeProps) {
       </Head>
 
       <main className={commonStyles.contentContainer}>
-        {results.map(post => (
+        {posts.map(post => (
           <div className={commonStyles.postContainer}>
             <p>{post.data.title}</p>
             <span>{post.data.subtitle}</span>
@@ -60,7 +73,11 @@ export default function Home({ postsPagination }: HomeProps) {
           </div>
         ))}
         {hasNextPage && (
-          <button type="button" className={commonStyles.loadMoreBtn}>
+          <button
+            type="button"
+            className={commonStyles.loadMoreBtn}
+            onClick={fetchMorePosts}
+          >
             Carregar mais posts
           </button>
         )}
@@ -73,7 +90,7 @@ export const getStaticProps: GetStaticProps = async () => {
   const prismic = getPrismicClient();
   const postsResponse = await prismic.query(
     Prismic.Predicates.at('document.type', 'posts'),
-    { pageSize: 10 }
+    { pageSize: 1 }
   );
 
   const postsPagination = {
