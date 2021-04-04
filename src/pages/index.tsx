@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { GetStaticProps } from 'next';
+import Link from 'next/link';
 import Head from 'next/head';
 import { FiCalendar, FiUser } from 'react-icons/fi';
 import { format } from 'date-fns';
@@ -8,8 +9,9 @@ import ptBR from 'date-fns/locale/pt-BR';
 import Prismic from '@prismicio/client';
 import { getPrismicClient } from '../services/prismic';
 
-import commonStyles from '../styles/common.module.scss';
-import { log } from 'node:console';
+import Header from '../components/Header';
+
+import styles from './home.module.scss';
 
 interface Post {
   uid?: string;
@@ -59,12 +61,15 @@ export default function Home({ postsPagination }: HomeProps) {
         <title>Space Travelling</title>
       </Head>
 
-      <main className={commonStyles.contentContainer}>
+      <Header />
+      <main className={styles.contentContainer}>
         {posts.map(post => (
-          <div className={commonStyles.postContainer}>
-            <p>{post.data.title}</p>
+          <div className={styles.postContainer} key={post.uid}>
+            <Link href={`/post/${post.uid}`}>
+              <a>{post.data.title}</a>
+            </Link>
             <span>{post.data.subtitle}</span>
-            <div className={commonStyles.postFooter}>
+            <div className={styles.postFooter}>
               <div>
                 <FiCalendar />
                 <span>
@@ -83,7 +88,7 @@ export default function Home({ postsPagination }: HomeProps) {
         {hasNextPage && (
           <button
             type="button"
-            className={commonStyles.loadMoreBtn}
+            className={styles.loadMoreBtn}
             onClick={fetchMorePosts}
           >
             Carregar mais posts
@@ -98,7 +103,7 @@ export const getStaticProps: GetStaticProps = async () => {
   const prismic = getPrismicClient();
   const postsResponse = await prismic.query(
     Prismic.Predicates.at('document.type', 'posts'),
-    { pageSize: 1 }
+    { pageSize: 5 }
   );
 
   const postsPagination = {
